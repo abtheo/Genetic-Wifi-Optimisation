@@ -1,6 +1,5 @@
 import pygame, sys
 import numpy as np
-import random
 from pygame.locals import *
 
 #constants representing colourMap
@@ -11,7 +10,7 @@ GREEN = (0,   255, 0  )
 BLUE  = (0,   0,   255)
 PURPLE = (140, 0, 190)
 
-#constants representing the different resources
+#Constants representing map resources
 NONE  = 0
 LOW = 1
 MED = 2
@@ -30,35 +29,37 @@ colourMap =   {
             }
 
 #Dimensions
-TILESIZE  = 20
-MAPWIDTH  = 40
-MAPHEIGHT = 40
+TILESIZE  = 10
+MAPWIDTH  = 64
+MAPHEIGHT = 64
 
-#Generates new map with border
-tilemap = np.ones( (MAPWIDTH,MAPHEIGHT) )
-tilemap[1:-1,1:-1] = 0
-tilemap = np.multiply(tilemap,5)
+def createMap():
+    #Generates new map with border
+    tilemap = np.ones( (MAPWIDTH,MAPHEIGHT) )
+    tilemap[1:-1,1:-1] = 0
+    tilemap = np.multiply(tilemap,5)
 
-#Generating walls
-for i in range(20):
-    coinFlip = np.random.randint(0,2) #X or Y direction
-    length = np.random.randint(5,15)
-    x_start = np.random.randint(0,40)
-    y_start = np.random.randint(0,40)
+    #Generating walls
+    for i in range(20):
+        coinFlip = np.random.randint(0,2) #X or Y direction
+        length = np.random.randint(5,40)
+        x_start = np.random.randint(0,MAPWIDTH)
+        y_start = np.random.randint(0,MAPHEIGHT)
+        
+        #Draws either vertically or horizontally
+        try:
+            if coinFlip:
+                for i in range(x_start,x_start+length):
+                    tilemap[i,y_start] = WALL
+            else:
+                for j in range(y_start,y_start+length):
+                    tilemap[x_start,j] = WALL
+        except IndexError:
+            next
     
-    #Draws either vertically or horizontally
-    try:
-        if coinFlip:
-            for i in range(x_start,x_start+length):
-                tilemap[i,y_start] = WALL
-        else:
-            for j in range(y_start,y_start+length):
-                tilemap[x_start,j] = WALL
-    except IndexError:
-        next
+    return tilemap
 
-
-def uiRefresh():
+def uiRefresh(tilemap):
     #Initialise display
     pygame.init()
     DISPLAYSURF = pygame.display.set_mode((MAPWIDTH*TILESIZE,MAPHEIGHT*TILESIZE))
