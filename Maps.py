@@ -1,7 +1,7 @@
 import pygame, sys
 import numpy as np
 from pygame.locals import *
-
+import time
 #constants representing colourMap
 BLACK = (0,   0,   0  )
 WHITE = (255, 255, 255)
@@ -40,7 +40,7 @@ def createMap():
     tilemap = np.multiply(tilemap,5)
 
     #Generating walls
-    for i in range(20):
+    for i in range(30):
         coinFlip = np.random.randint(0,2) #X or Y direction
         length = np.random.randint(5,40)
         x_start = np.random.randint(0,MAPWIDTH)
@@ -62,24 +62,41 @@ def createMap():
 #Initialise display    
 def uiInit():
     pygame.init()
-    return pygame.display.set_mode((MAPWIDTH*TILESIZE,MAPHEIGHT*TILESIZE))
+    
+    return pygame.display.set_mode((MAPWIDTH*TILESIZE+100,MAPHEIGHT*TILESIZE))
 
-def uiRefresh(tilemap, DISPLAYSURF):
-    while True:
-        #get all the user events
-        for event in pygame.event.get():
-            #if the user wants to quit
-            if event.type == QUIT:
-                #and the game and close the window
-                pygame.quit()
-                sys.exit()
+def uiRefresh(tilemap, bestMap, DISPLAYSURF):
+    #get all the user events
+    button = pygame.Rect(640, 10, 80, 40)
+    flag = False
+    for event in pygame.event.get():
+        #if the user wants to quit
+        if event.type == QUIT:
+            #and the game and close the window
+            pygame.quit()
+            sys.exit()
+            
+        
+        if event.type == pygame.MOUSEBUTTONDOWN:
+                mouse_pos = event.pos  # gets mouse position
+
+                # checks if mouse position is over the button
+
+                if button.collidepoint(mouse_pos):
+                    #Shows best solution found so far
+                    tilemap = bestMap
+                    flag = True
+
+    #loop through each row
+    for row in range(MAPHEIGHT):
+        #loop through each column in the row
+        for column in range(MAPWIDTH):
+            #draw the resource at that position in the tilemap, using the correct colour
+            pygame.draw.rect(DISPLAYSURF, colourMap[tilemap[row][column]], (column*TILESIZE,row*TILESIZE,TILESIZE,TILESIZE))
+
+    pygame.draw.rect(DISPLAYSURF, [200, 200, 200], button)
     
-        #loop through each row
-        for row in range(MAPHEIGHT):
-            #loop through each column in the row
-            for column in range(MAPWIDTH):
-                #draw the resource at that position in the tilemap, using the correct colour
-                pygame.draw.rect(DISPLAYSURF, colourMap[tilemap[row][column]], (column*TILESIZE,row*TILESIZE,TILESIZE,TILESIZE))
-    
-        #update the display
-        pygame.display.update()
+    #update the display
+    pygame.display.update()
+    if flag == True:
+        time.sleep(10)

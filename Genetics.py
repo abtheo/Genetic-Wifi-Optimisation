@@ -1,8 +1,8 @@
 import Maps
 import numpy as np
-
+import time
 #CONSTANT DECLARATIONS
-SPOTNUM = 30
+SPOTNUM = 20
 
 #Dimensions
 TILESIZE  = 10
@@ -86,9 +86,12 @@ class Spot:
 
 class iMap:
 
-    def __init__(self,tilemap):               
-        self.spotList = self.generateSpots(SPOTNUM)
-        self.tilemap = tilemap
+    def __init__(self,tilemap,spotList=None):
+        if spotList == None:
+            self.spotList = self.generateSpots(SPOTNUM)
+        else:
+            self.spotList = spotList
+        self.tilemap = np.copy(tilemap)
         self.fitness = 0
             
     #Returns list of newly generated spots
@@ -117,8 +120,8 @@ class iMap:
         
         #Gets overall coverage for fitness calculation
         #Equates to percentage of free space now covered by signal
-        signalFitness = 100 - (spotMapArea / tilemapArea * 100)
-        
+        #signalFitness = 100 - (spotMapArea / tilemapArea * 100)
+        signalFitness = tilemapArea - spotMapArea
         #Gets average fitness of each allele
         alleleFitness = 0
         for spot in self.spotList:
@@ -137,12 +140,12 @@ def generatePopulation(N,tilemap):
         population.append(newiMap)
     return population
 
-
-def pickParents(population):
+#Builds proportional pool of parents and selects two at random
+def pickParents_old(population):
     pool = []
     for i, imap in enumerate(population):
         #Fills pool with proportional percentage of each parent
-        proportion = np.full(np.rint(imap.fitness),i,dtype="int32")
+        proportion = np.full( np.power(np.rint(imap.fitness), 2) ,i,dtype="int32")
         pool = np.concatenate(  (pool, proportion)  ,axis=0)
     #Selects parents from pool
     mommy = int(np.random.choice(pool))
@@ -150,12 +153,93 @@ def pickParents(population):
     
     return population[mommy], population[daddy] 
 
-#def reproduce(mommy, daddy):
-    
+def pickParents(population):
+    population.sort(key=lambda x: x.fitness, reverse=True)
+    #Only selects best parents
+    return population[0], population[1]
 
-#DISPLAYSURF = Maps.uiInit()
+#Applies random genetic variation to an individual
+def mutate(child):
+    #Chance of each mutation
+    moveRate = 0.3
+    typeRate = 0.1
+    
+    #Random choices
+    mutation = np.random.rand()
+    randIndex = np.random.randint(0,len(child.spotList))
+    #Moves spot randomly
+    if mutation < moveRate:
+        #Boundary detection
+        if child.spotList[randIndex].x_pos > 1 and child.spotList[randIndex].x_pos < MAPWIDTH-1:
+            child.spotList[randIndex].x_pos = np.random.randint(2,MAPWIDTH-2)
+        if child.spotList[randIndex].y_pos > 1 and child.spotList[randIndex].y_pos < MAPHEIGHT-1:
+            child.spotList[randIndex].y_pos = np.random.randint(2,MAPHEIGHT-2)
+    
+    #Changes type of one spot randomly
+    if mutation < typeRate:
+        child.spotList[randIndex].spotType = np.random.randint(1,4)
+        
+    return child
+
+def crossover(mommy, daddy):
+    spotLen = len(mommy.spotList)
+    childSpotList=list()
+    mommy.spotList.sort(key=lambda x: x.getFitness(mommy.tilemap), reverse=True)
+    daddy.spotList.sort(key=lambda x: x.getFitness(daddy.tilemap), reverse=True)
+    
+    
+    
+    #Always chooses the most fit spot
+    for i in range(spotLen):
+        momFit = mommy.spotList[i].getFitness(mommy.tilemap)
+        dadFit = daddy.spotList[i].getFitness(daddy.tilemap)
+        
+        bestFit = mommy.spotList[i] if momFit >= dadFit else daddy.spotList[i]
+        childSpotList.append(bestFit)
+        
+    return childSpotList
+
+#Produces new population of evolved iMaps
+def reproduce(population,tilemap):
+    newPopulation = list()
+    for i in range(SPOTNUM):
+        #Gets parents from proportional pool
+        mommy, daddy = pickParents(population)
+        #Swaps genetic information from each parent AKA Crossover
+        #childSpotList = mommy.spotList[:SPOTNUM] + daddy.spotList[SPOTNUM:]
+        childSpotList = crossover(mommy,daddy)
+        #Spawn a new child
+        child = iMap(tilemap,childSpotList)
+        #Apply random genetic variation
+        mutate(child)
+        #Evaluate fitness of new child
+        child.mapFitness()
+        #Add mutant child to new population
+        newPopulation.append(child)
+        
+    return newPopulation
+
+DISPLAYSURF = Maps.uiInit()
 #Generates new random map for algorithm to run inside    
 tilemap = Maps.createMap() 
-population = generatePopulation(10,tilemap)
-print(pickParents(population)[0].tilemap)
-#Maps.uiRefresh(population[0][1], DISPLAYSURF)
+population = generatePopulation(20,tilemap)
+
+highscore = 0
+#Main Loop
+#Genetic Algorithm runs in generation steps of 10
+while True:
+    for i in range(10):
+        population = reproduce(population,tilemap)
+        #Gets best child for display
+        bestFitness = 0
+        for x,imap in enumerate(population):
+            if imap.fitness > bestFitness:
+                bestIndex = x
+                bestFitness = imap.fitness
+                
+        if bestFitness > highscore:
+            highscore = bestFitness
+            bestIndividual = population[bestIndex]
+            print("New highscore! Fitness = ", highscore)
+        Maps.uiRefresh(population[bestIndex].tilemap, bestIndividual.tilemap, DISPLAYSURF)
+        
