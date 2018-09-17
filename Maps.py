@@ -59,12 +59,12 @@ def createMap():
     
     return tilemap
 
-def uiRefresh(tilemap):
-    #Initialise display
+#Initialise display    
+def uiInit():
     pygame.init()
-    DISPLAYSURF = pygame.display.set_mode((MAPWIDTH*TILESIZE,MAPHEIGHT*TILESIZE))
+    return pygame.display.set_mode((MAPWIDTH*TILESIZE,MAPHEIGHT*TILESIZE))
 
-    #UI Refresh Loop
+def uiRefresh(tilemap, DISPLAYSURF):
     while True:
         #get all the user events
         for event in pygame.event.get():

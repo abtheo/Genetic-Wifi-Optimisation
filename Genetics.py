@@ -38,12 +38,15 @@ class Spot:
                 
                 blockedFlag = False
                 try:
-                    #Draw line to origin and check for walls
-                    for xBlocking in range(i,self.x_pos):
+                    #Ternary operator to determine loop direction
+                    direction = 1 if (i < self.x_pos) else -1
+                    #Draw imaginary line to origin and check for walls
+                    for xBlocking in range(i,self.x_pos, direction):
                         if tilemap[xBlocking, j] == WALL:
                             blockedFlag = True
-                            
-                    for yBlocking in range(j,self.y_pos):
+                     
+                    direction = 1 if (j < self.y_pos) else -1
+                    for yBlocking in range(j,self.y_pos, direction):
                         if tilemap[i, yBlocking] == WALL:
                             blockedFlag = True
                      
@@ -80,8 +83,11 @@ class Spot:
         
         fitness = signalCounter / signalSizes.get(self.spotType) * 100
         return fitness
-                   
-        
+
+class Allele:
+
+    def __init__(self):               
+        self.spotList = generateSpots(SPOTNUM)
 #Returns list of newly generated spots
 def generateSpots(n):
     newSpotList = list()
@@ -99,7 +105,7 @@ def drawSpots(spotList,tilemap):
     return localMap
 
 #Generates N random population of spotMaps
-#Also gets their fitness
+#Also gets fitness of each map
 def generatePopulation(N,tilemap):
     population = list()
     for i in range(N):
@@ -124,12 +130,31 @@ def mapFitness(spotList, tilemap):
     #Gets average fitness of each allele
     alleleFitness = 0
     for spot in spotList:
-        alleleFitness += spot.getFitness(tilemap) / 2
-    
+        alleleFitness = (alleleFitness + spot.getFitness(spotMap)) / 2
+        
     fitness = signalFitness + alleleFitness
-    return fitness, spotMap
+    print(fitness)
+    return fitness, spotList, spotMap
 
+
+def pickParents(population):
+    pool = []
+    for i, imap in enumerate(population):
+        #Fills pool with proportional percentage of each parent
+        proportion = np.full(np.rint(imap[0]),i,dtype="int32")
+        pool = np.concatenate(  (pool, proportion)  ,axis=0)
+    #Selects parents from pool
+    mommy = int(np.random.choice(pool))
+    daddy = int(np.random.choice(pool))
+    
+    return population[mommy], population[daddy] 
+
+def reproduce(mommy, daddy):
+    
+
+#DISPLAYSURF = Maps.uiInit()
 #Generates new random map for algorithm to run inside    
 tilemap = Maps.createMap() 
 population = generatePopulation(10,tilemap)
-#Maps.uiRefresh(spotMap)
+print(pickParents(population))
+#Maps.uiRefresh(population[0][1], DISPLAYSURF)
