@@ -40,7 +40,7 @@ def createMap():
     tilemap = np.multiply(tilemap,5)
 
     #Generating walls
-    for i in range(30):
+    for i in range(40):
         coinFlip = np.random.randint(0,2) #X or Y direction
         length = np.random.randint(5,40)
         x_start = np.random.randint(0,MAPWIDTH)
@@ -65,7 +65,7 @@ def uiInit():
     
     return pygame.display.set_mode((MAPWIDTH*TILESIZE+100,MAPHEIGHT*TILESIZE))
 
-def uiRefresh(tilemap, bestMap, DISPLAYSURF):
+def uiRefresh(tilemap, data, DISPLAYSURF):
     #get all the user events
     button = pygame.Rect(640, 10, 80, 40)
     flag = False
@@ -84,7 +84,7 @@ def uiRefresh(tilemap, bestMap, DISPLAYSURF):
 
                 if button.collidepoint(mouse_pos):
                     #Shows best solution found so far
-                    tilemap = bestMap
+                    tilemap = data[0].tilemap
                     flag = True
 
     #loop through each row
