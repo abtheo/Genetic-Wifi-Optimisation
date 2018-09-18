@@ -62,12 +62,14 @@ def createMap():
 #Initialise display    
 def uiInit():
     pygame.init()
-    
-    return pygame.display.set_mode((MAPWIDTH*TILESIZE+100,MAPHEIGHT*TILESIZE))
+    pygame.font.init()
+    return pygame.display.set_mode((MAPWIDTH*TILESIZE+200,MAPHEIGHT*TILESIZE))
 
 def uiRefresh(tilemap, data, DISPLAYSURF):
     #get all the user events
     button = pygame.Rect(640, 10, 80, 40)
+    eraser = pygame.Rect(640,80,300,300)
+    myfont = pygame.font.SysFont('Arial', 20)
     flag = False
     for event in pygame.event.get():
         #if the user wants to quit
@@ -94,7 +96,17 @@ def uiRefresh(tilemap, data, DISPLAYSURF):
             #draw the resource at that position in the tilemap, using the correct colour
             pygame.draw.rect(DISPLAYSURF, colourMap[tilemap[row][column]], (column*TILESIZE,row*TILESIZE,TILESIZE,TILESIZE))
 
+    #Drawing elements
     pygame.draw.rect(DISPLAYSURF, [200, 200, 200], button)
+    textsurface1 = myfont.render('View Best', False, (0, 0, 0))
+    highString = "Highest Fitness: " + str(data[1])
+    currString = "Current Fitness: " + str(data[2])
+    pygame.draw.rect(DISPLAYSURF, [0,0,0], eraser)
+    textsurface2 = myfont.render(highString,False,(255,255,255))
+    textsurface3 = myfont.render(currString,False,(255,255,255))
+    DISPLAYSURF.blit(textsurface1,(640,10))
+    DISPLAYSURF.blit(textsurface2,(640,80))
+    DISPLAYSURF.blit(textsurface3,(640,120))
     
     #update the display
     pygame.display.update()

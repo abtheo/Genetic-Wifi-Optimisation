@@ -260,7 +260,7 @@ while True:
             bestIndividual = population[bestIndex]
             print("New highscore! Fitness = ", highscore)
         
-        data = [ bestIndividual, highscore]
+        data = [ bestIndividual, highscore, bestFitness]
         
         Maps.uiRefresh(population[bestIndex].tilemap, data, DISPLAYSURF)
         
