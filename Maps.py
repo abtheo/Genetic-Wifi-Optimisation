@@ -101,12 +101,15 @@ def uiRefresh(tilemap, data, DISPLAYSURF):
     textsurface1 = myfont.render('View Best', False, (0, 0, 0))
     highString = "Highest Fitness: " + str(data[1])
     currString = "Current Fitness: " + str(data[2])
+    genString = "Current Generation: " + str(data[3])
     pygame.draw.rect(DISPLAYSURF, [0,0,0], eraser)
     textsurface2 = myfont.render(highString,False,(255,255,255))
     textsurface3 = myfont.render(currString,False,(255,255,255))
+    textsurface4 = myfont.render(genString,False,(255,255,255))
     DISPLAYSURF.blit(textsurface1,(640,10))
     DISPLAYSURF.blit(textsurface2,(640,80))
     DISPLAYSURF.blit(textsurface3,(640,120))
+    DISPLAYSURF.blit(textsurface4,(640,160))
     
     #update the display
     pygame.display.update()

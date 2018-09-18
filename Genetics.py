@@ -1,6 +1,6 @@
 import Maps
 import numpy as np
-import time
+
 #CONSTANT DECLARATIONS
 SPOTNUM = 20
 
@@ -31,6 +31,7 @@ class Spot:
         self.spotType = np.random.randint(1,4)
                
         
+    #Draw self onto map
     def draw(self, tilemap):
         #Iterates through surrounding map area
         for i in range(self.x_pos - self.spotType, self.x_pos + self.spotType+1):
@@ -84,6 +85,7 @@ class Spot:
         fitness = signalCounter / signalSizes.get(self.spotType) * 100
         return fitness
 
+#Class comprising the population
 class iMap:
 
     def __init__(self,tilemap,spotList=None):
@@ -108,8 +110,8 @@ class iMap:
         for item in self.spotList:
             self.tilemap = item.draw(self.tilemap)
     
-    #Evaluates percentage of white covered
-    #So needs a copy of original map (throughout generations)    
+    #Evaluates fitness of the iMap
+    #Based on allele fitness and overall map coverage
     def mapFitness(self):
         #Amount of open space in original map
         tilemapArea = (self.tilemap == NONE).sum()
@@ -140,19 +142,6 @@ def generatePopulation(N,tilemap):
         population.append(newiMap)
     return population
 
-#Builds proportional pool of parents and selects two at random
-def pickParents_old(population):
-    pool = []
-    for i, imap in enumerate(population):
-        #Fills pool with proportional percentage of each parent
-        proportion = np.full( np.power(np.rint(imap.fitness), 2) ,i,dtype="int32")
-        pool = np.concatenate(  (pool, proportion)  ,axis=0)
-    #Selects parents from pool
-    mommy = int(np.random.choice(pool))
-    daddy = int(np.random.choice(pool))
-    
-    return population[mommy], population[daddy] 
-
 def pickParents(population,N):
     population.sort(key=lambda x: x.fitness, reverse=True)
     #Only selects best parents
@@ -182,6 +171,7 @@ def mutate(child):
         
     return child
 
+#Exchanges genetic information between parents
 def crossover(population):
     childSpotList=list()
     #Selects parents and sorts by fitness
@@ -212,7 +202,6 @@ def crossover(population):
             bestFit.y_pos = np.random.randint(2,MAPHEIGHT-2)
 
         index = (index+1) % SPOTNUM
-        #print(len(childSpotList))
         
     return childSpotList
 
@@ -221,28 +210,26 @@ def reproduce(population,tilemap):
     newPopulation = list()
     for i in range(SPOTNUM):
         #Swaps genetic information from each parent AKA Crossover
-        #childSpotList = mommy.spotList[:SPOTNUM] + daddy.spotList[SPOTNUM:]
         childSpotList = crossover(population)
-        #print(len(childSpotList))
         #Spawn a new child
         child = iMap(tilemap,childSpotList)
         #Apply random genetic variation
         mutate(child)
-        #Evaluate fitness of new child
+        #Evaluate fitness of mutant child
         child.mapFitness()
         #Add mutant child to new population
         newPopulation.append(child)
         
     return newPopulation
 
+#Initialisations
 DISPLAYSURF = Maps.uiInit()
 #Generates new random map for algorithm to run inside    
 tilemap = Maps.createMap() 
 population = generatePopulation(50,tilemap)
-
 highscore = 0
-#Main Loop
-#Genetic Algorithm runs in generation steps of 10
+generation = 0
+#Genetic Algorithm runs, displays every 10 generations
 while True:
     for i in range(10):
         population = reproduce(population,tilemap)
@@ -252,15 +239,14 @@ while True:
             if imap.fitness > bestFitness:
                 bestIndex = x
                 bestFitness = imap.fitness
-                
-        #print(bestFitness)
-                
+  
         if bestFitness > highscore:
             highscore = bestFitness
             bestIndividual = population[bestIndex]
-            print("New highscore! Fitness = ", highscore)
+            print("New highscore! Fitness = ", highscore, ", Generation = ",generation)
         
-        data = [ bestIndividual, highscore, bestFitness]
+        data = [ bestIndividual, highscore, bestFitness, generation]
         
         Maps.uiRefresh(population[bestIndex].tilemap, data, DISPLAYSURF)
+        generation+=1
         
